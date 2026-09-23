@@ -27,9 +27,14 @@ MQTT + Blynk), da entrega da Atividade Somativa 2 em diante.
 - [x] Simulação validada de ponta a ponta: WiFi → MQTT → Blynk conectando
   com sucesso
 
+- [x] Orientação do LDR confirmada: `INVERT_LDR = True` (módulo dá tensão
+  maior no escuro), validado com testes em 0,1 lux e 479 lux — ver
+  [relatorio-teste-wokwi.md](relatorio-teste-wokwi.md)
+
 ## Em andamento
 
-- [ ] Confirmar orientação correta do LDR (usar `INVERT_LDR` se necessário)
+- [ ] Confirmar que o gauge/switches do dashboard Blynk atualizam em tempo
+  real com a simulação rodando
 - [ ] Gravar vídeo demonstrativo (até 4 min)
 - [ ] Capturas de tela da simulação e do dashboard
 - [ ] Montar o `.zip` de entrega e enviar no AVA (prazo estendido: 23/09)

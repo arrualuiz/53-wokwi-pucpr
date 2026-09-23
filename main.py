@@ -39,7 +39,7 @@ PUBLISH_INTERVAL_MS = 2000  # intervalo entre leituras/publicacoes do sensor
 
 # Alguns modulos de LDR entregam tensao MAIOR no escuro (comportamento invertido).
 # Se o LED acender com luz em vez de no escuro, mude para True.
-INVERT_LDR = False
+INVERT_LDR = True   # validado no Wokwi: este modulo LDR da tensao maior no escuro
 
 # ---------------------------------------------------------------------------
 # Estado global do sistema
