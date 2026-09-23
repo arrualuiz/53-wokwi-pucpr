@@ -28,7 +28,7 @@ WIFI_SSID = "Wokwi-GUEST"
 WIFI_PASSWORD = ""
 
 BLYNK_AUTH_TOKEN = "SEU_TOKEN_DO_DEVICE_AQUI"   # gerado ao criar o device no Blynk.Cloud (NAO COMITAR o token real)
-MQTT_BROKER = "blynk.cloud"
+MQTT_BROKER = "ny3.blynk.cloud"   # broker regional da conta (visto em "Regiao: NY3" no Blynk Console)
 MQTT_PORT = 1883
 MQTT_CLIENT_ID = "esp32-iluminacao"
 

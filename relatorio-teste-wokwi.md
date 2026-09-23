@@ -115,13 +115,59 @@ client = MQTTClient(MQTT_CLIENT_ID, MQTT_BROKER, MQTT_PORT,
   `"device"`, senha igual ao Auth Token, `keepalive=45` e
   `INVERT_LDR = True`.
 
-## Próximos passos sugeridos
+### Rodada 5: broker recusa conexão no subscribe (redirect)
 
-- Conferir no Blynk Console os nomes dos datastreams (V0 a V4) e ver se o
-  gauge atualiza em tempo real.
-- Testar os comandos do dashboard: desligar o modo Auto (V1), mudar o
-  limiar (V2) e controlar o LED manualmente (V3).
-- Se o broker recusar a conexão, usar o servidor regional que aparece nas
-  informações do device (algo como `ny3.blynk.cloud`).
+```
+Mensagem recebida em downlink/redirect -> mqtt://ny3.blynk.cloud:1883
+Traceback (most recent call last):
+  ...
+  File "umqttsimple.py", line 156, in subscribe
+  File "umqttsimple.py", line 170, in wait_msg
+OSError: -1
+```
 
-**Referências:** Blynk MQTT: Authentication · Blynk MQTT: Topic Structure
+- **Causa:** o broker genérico `blynk.cloud` aceita a conexão, mas envia uma
+  mensagem em `downlink/redirect` apontando para o broker regional da conta
+  (`ny3.blynk.cloud`) e fecha a conexão em seguida. O código não tratava
+  esse redirecionamento.
+
+**Correção:** usar direto o broker regional, já visto como "Região: NY3" no
+Blynk Console: `MQTT_BROKER = "ny3.blynk.cloud"`.
+
+### Rodada 6: conecta e publica, mas o dashboard não atualiza
+
+- Com o broker regional, a conexão MQTT ficou estável e os logs mostravam
+  `Luminosidade: 75.0% | ...` a cada ciclo, e o contador de "Mensagens
+  usadas" do Blynk Console subia — mas o gauge V0 continuava em 0.
+- **Tentativa errada:** trocar os tópicos para minúsculo (`ds/v0`,
+  `downlink/ds/v1` etc.), supondo que a API seguisse o padrão da API HTTP
+  do Blynk. Não resolveu.
+- **Causa real:** confirmada com o assistente de IA do próprio Blynk
+  Console — o tópico deve usar o **Pin exatamente como cadastrado no
+  datastream**, que neste projeto é maiúsculo (`V0`, `V1`, `V2`, `V3`,
+  `V4`), não o nome de exibição ("Luminosidade" etc.) nem minúsculo.
+
+**Correção:** reverter os tópicos para maiúsculo (voltando ao padrão
+original `ds/V0`, `downlink/ds/V1` etc.).
+
+### Rodada 7: validação final do dashboard ✅
+
+- Com o broker regional e os tópicos em maiúsculo, o gauge "Luminosidade
+  (%)" no Blynk Console passou a atualizar em tempo real (valor 62%
+  confirmado ao vivo), e os 5 widgets (gauge, 2 switches, slider, value
+  display) estão corretamente vinculados aos datastreams V0–V4.
+- Sistema validado de ponta a ponta: ESP32 (Wokwi) → MQTT → Blynk Cloud →
+  Dashboard, em ambas as direções (publicação de sensor e comandos do
+  dashboard).
+
+## Configuração final validada
+
+- `MQTT_BROKER = "ny3.blynk.cloud"` (broker regional direto, evita o
+  redirecionamento)
+- Autenticação: `user="device"`, `password=<BLYNK_AUTH_TOKEN>`
+- Tópicos: `ds/V0`...`ds/V4` (publicação) e `downlink/ds/V1`..`downlink/ds/V3`
+  (assinatura) — sempre com o Pin exatamente como aparece no Blynk Console
+- `INVERT_LDR = True`
+
+**Referências:** Blynk MQTT: Authentication · Blynk MQTT: Topic Structure ·
+Blynk MQTT: Datastreams

@@ -31,10 +31,17 @@ MQTT + Blynk), da entrega da Atividade Somativa 2 em diante.
   maior no escuro), validado com testes em 0,1 lux e 479 lux — ver
   [relatorio-teste-wokwi.md](relatorio-teste-wokwi.md)
 
+- [x] Corrigido redirecionamento de broker (Blynk manda `downlink/redirect`
+  para o broker regional `ny3.blynk.cloud`) e o formato correto dos tópicos
+  MQTT (Pin exatamente como cadastrado, ex. `V0`, não `v0` nem o nome de
+  exibição)
+- [x] Dashboard Blynk validado ao vivo: gauge de luminosidade atualizando
+  em tempo real com a simulação do Wokwi
+
 ## Em andamento
 
-- [ ] Confirmar que o gauge/switches do dashboard Blynk atualizam em tempo
-  real com a simulação rodando
+- [ ] Testar os comandos do dashboard (V1/V2/V3) controlando o LED de volta
+  no Wokwi
 - [ ] Gravar vídeo demonstrativo (até 4 min)
 - [ ] Capturas de tela da simulação e do dashboard
 - [ ] Montar o `.zip` de entrega e enviar no AVA (prazo estendido: 23/09)
