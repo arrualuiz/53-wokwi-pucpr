@@ -28,7 +28,7 @@ WIFI_SSID = "Wokwi-GUEST"
 WIFI_PASSWORD = ""
 
 BLYNK_AUTH_TOKEN = "SEU_TOKEN_DO_DEVICE_AQUI"   # gerado ao criar o device no Blynk.Cloud (NAO COMITAR o token real)
-MQTT_BROKER = "mqtt.blynk.cloud"
+MQTT_BROKER = "blynk.cloud"
 MQTT_PORT = 1883
 MQTT_CLIENT_ID = "esp32-iluminacao"
 
@@ -111,9 +111,9 @@ def conectar_mqtt():
         MQTT_CLIENT_ID,
         MQTT_BROKER,
         MQTT_PORT,
-        user=BLYNK_AUTH_TOKEN,
-        password="",
-        keepalive=60,
+        user="device",
+        password=BLYNK_AUTH_TOKEN,
+        keepalive=45,
     )
     client.set_callback(mqtt_callback)
     client.connect()

@@ -17,10 +17,18 @@ MQTT + Blynk), da entrega da Atividade Somativa 2 em diante.
   display) vinculados aos datastreams
 - [x] Descrição escrita do projeto (`descricao.md`)
 
+## Concluído (cont.)
+
+- [x] Correção do `diagram.json`: LDR ligado no pino AO (não GND) e conexão
+  do monitor serial adicionada
+- [x] Correção da conexão MQTT: broker `blynk.cloud` (não `mqtt.blynk.cloud`,
+  que não resolve) e autenticação `user="device"` + `password=<token>`
+  (estava invertido)
+- [x] Simulação validada de ponta a ponta: WiFi → MQTT → Blynk conectando
+  com sucesso
+
 ## Em andamento
 
-- [ ] Validar a simulação completa no Wokwi (WiFi → MQTT → Blynk) após a
-  correção do `diagram.json`
 - [ ] Confirmar orientação correta do LDR (usar `INVERT_LDR` se necessário)
 - [ ] Gravar vídeo demonstrativo (até 4 min)
 - [ ] Capturas de tela da simulação e do dashboard
