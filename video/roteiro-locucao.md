@@ -23,7 +23,7 @@ técnico: `roteiro-completo.md`.
 
 **[0:55] Simulação rodando**
 
-> "Olha, a simulação já tá rodando aqui no Wokwi. No monitor serial dá
+> "Olha, a simulação já tá rodando aqui no Wokwi. No monitor dá
 > pra ver o ESP32 conectando no WiFi, entrando no broker MQTT do Blynk,
 > e mandando a leitura de luminosidade a cada 2 segundos, com horário
 > real e tudo."
