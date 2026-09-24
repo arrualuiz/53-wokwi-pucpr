@@ -21,6 +21,11 @@ import time
 from machine import Pin, ADC
 from umqttsimple import MQTTClient
 
+try:
+    import ntptime
+except ImportError:
+    ntptime = None
+
 # ---------------------------------------------------------------------------
 # Configuracoes - AJUSTAR conforme seu ambiente Wokwi / device do Blynk
 # ---------------------------------------------------------------------------
@@ -63,6 +68,25 @@ def conectar_wifi():
     print("WiFi conectado:", wlan.ifconfig())
 
 
+def sincronizar_hora():
+    """Ajusta o relogio via NTP, so para exibir horario real nos logs."""
+    if ntptime is None:
+        return
+    try:
+        ntptime.settime()
+        print("Hora sincronizada via NTP")
+    except Exception as e:
+        print("Nao foi possivel sincronizar hora via NTP:", e)
+
+
+def agora_str():
+    try:
+        t = time.localtime()
+        return "{:02d}:{:02d}:{:02d}".format(t[3], t[4], t[5])
+    except Exception:
+        return "??:??:??"
+
+
 def ler_luminosidade_pct():
     """Le o ADC do LDR e converte para uma porcentagem de luminosidade (0-100).
     Ajustar a formula conforme a orientacao do divisor de tensao montado."""
@@ -93,7 +117,7 @@ def mqtt_callback(topic, msg):
 
     topic = topic.decode()
     valor = msg.decode()
-    print("Mensagem recebida em", topic, "->", valor)
+    print("[{}] Mensagem recebida em {} -> {}".format(agora_str(), topic, valor))
 
     if topic == "downlink/ds/Modo Automatico":
         auto_mode = valor == "1"
@@ -123,12 +147,13 @@ def conectar_mqtt():
     client.subscribe(b"downlink/ds/Modo Automatico")
     client.subscribe(b"downlink/ds/Limiar")
     client.subscribe(b"downlink/ds/LED Manual")
-    print("Conectado ao broker MQTT do Blynk!")
+    print("[{}] Conectado ao broker MQTT do Blynk!".format(agora_str()))
     return client
 
 
 def main():
     conectar_wifi()
+    sincronizar_hora()
     client = conectar_mqtt()
 
     ultima_publicacao = time.ticks_ms()
@@ -145,14 +170,14 @@ def main():
                 client.publish(b"ds/Luminosidade", str(nivel).encode())
                 client.publish(b"ds/Estado LED", str(estado_led).encode())
 
-                print("Luminosidade: {}% | Auto: {} | Limiar: {}% | LED: {}".format(
-                    nivel, auto_mode, threshold, estado_led))
+                print("[{}] Luminosidade: {}% | Auto: {} | Limiar: {}% | LED: {}".format(
+                    agora_str(), nivel, auto_mode, threshold, estado_led))
 
                 ultima_publicacao = agora
 
             time.sleep(0.1)
         except OSError as e:
-            print("Erro de conexao, reconectando...", e)
+            print("[{}] Erro de conexao, reconectando...".format(agora_str()), e)
             try:
                 client.disconnect()
             except OSError:
