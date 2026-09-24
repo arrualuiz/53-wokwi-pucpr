@@ -42,10 +42,22 @@ MQTT + Blynk), da entrega da Atividade Somativa 2 em diante.
   **nome do datastream** (`downlink/ds/Modo Automatico`, `.../Limiar`,
   `.../LED Manual`), não o Pin — diagnosticado com MQTTX. Modo
   automático/manual e controle do LED testados via dashboard com sucesso.
+- [x] Uplink também corrigido para usar o nome do datastream
+  (`ds/Luminosidade`, `ds/Estado LED`, não `ds/V0`/`ds/V4`) — descoberto
+  via aba "Erros" do Blynk Console (955+ erros de "pino não encontrado")
+- [x] Client ID único por execução (`time.ticks_ms()`), eliminando
+  desconexões intermitentes por sessão duplicada no broker
+- [x] Confirmado que a página real do device (Dispositivos → ESP32 Wokwi)
+  mostra o valor real (75%), batendo com o monitor serial — a página de
+  preview do template mostra dados aleatórios/fake e não deve ser usada
+  como referência
+- [x] Roteiro do vídeo criado (`video/roteiro-completo.md` e
+  `video/roteiro-locucao.md`)
 
 ## Em andamento
 
-- [ ] Gravar vídeo demonstrativo (até 4 min)
+- [ ] Gravar vídeo demonstrativo (até 4 min) usando a página real do
+  device (nunca o preview do template)
 - [ ] Capturas de tela da simulação e do dashboard
 - [ ] Montar o `.zip` de entrega e enviar no AVA (prazo estendido: 23/09)
 
