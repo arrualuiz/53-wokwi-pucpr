@@ -13,12 +13,13 @@ monitoramento e controle remoto via dashboard no Blynk Cloud.
 
 O ESP32 (simulado no Wokwi, programado em MicroPython) lê periodicamente o
 sinal analógico do LDR, converte para um percentual de luminosidade (0–100%)
-e publica esse valor via **MQTT** para o broker **Blynk Cloud**
-(`mqtt.blynk.cloud`), usando a API nativa de datastreams do Blynk
-(tópicos `ds/Vx` para publicação e `downlink/ds/Vx` para comandos recebidos
-do dashboard). O ESP32 também recebe, via MQTT, os comandos enviados pelo
-usuário no dashboard, e decide se o LED deve acender automaticamente ou ser
-controlado manualmente.
+e publica esse valor via **MQTT** para o broker regional do **Blynk Cloud**
+(`ny3.blynk.cloud`, porta 1883), usando a API nativa de datastreams do Blynk
+(tópicos `ds/<nome do datastream>` para publicação e
+`downlink/ds/<nome do datastream>` para comandos recebidos do dashboard). O
+ESP32 também recebe, via MQTT, os comandos enviados pelo usuário no
+dashboard, e decide se o LED deve acender automaticamente ou ser controlado
+manualmente.
 
 ## Componentes
 
@@ -29,16 +30,17 @@ controlado manualmente.
 
 ## Lógica de funcionamento
 
-1. A cada 2 segundos, o ESP32 lê o LDR e publica o nível de luminosidade em
-   `ds/V0` (exibido no dashboard como **gauge**).
-2. Se o **modo automático** (`V1`, switch) estiver ativo, o LED acende
+1. A cada 2 segundos, o ESP32 lê o LDR e publica o nível de luminosidade
+   (`ds/Luminosidade`, exibido no dashboard como **gauge**, pino V0).
+2. Se o **modo automático** (switch, pino V1) estiver ativo, o LED acende
    automaticamente sempre que a luminosidade cair abaixo do **limiar**
-   definido em `V2` (slider, padrão 30%) — simulando o anoitecer/ambiente
+   definido no slider (pino V2, padrão 30%) — simulando o anoitecer/ambiente
    escuro.
 3. Se o modo automático estiver desativado, o usuário controla o LED
-   manualmente pelo switch `V3`, direto do dashboard, em qualquer lugar.
-4. O estado atual do LED é publicado em `ds/V4`, permitindo acompanhar o
-   resultado da automação em tempo real.
+   manualmente pelo switch "LED Manual" (pino V3), direto do dashboard, em
+   qualquer lugar.
+4. O estado atual do LED é publicado em `ds/Estado LED` (pino V4), permitindo
+   acompanhar o resultado da automação em tempo real.
 
 ## Dashboard (Blynk)
 
@@ -59,9 +61,10 @@ controlado manualmente.
 - **Blynk Dashboard**: interface de visualização e controle remoto,
   acessível via navegador ou app, refletindo o estado do sistema físico
   simulado.
-- **MQTTX** (opcional): usado durante o desenvolvimento para monitorar os
-  tópicos `ds/#` e `downlink/ds/#` e validar a comunicação antes de ligar
-  o dashboard.
+- **MQTTX**: usado durante o desenvolvimento para inspecionar os tópicos
+  `ds/#` e `downlink/ds/#`, o que foi essencial para descobrir o formato
+  exato exigido pela API MQTT do Blynk (o nome do datastream, e não o
+  identificador do pino, tanto na publicação quanto na assinatura).
 
 ## Personalização em relação ao projeto-base
 
