@@ -160,13 +160,49 @@ original `ds/V0`, `downlink/ds/V1` etc.).
   Dashboard, em ambas as direções (publicação de sensor e comandos do
   dashboard).
 
+### Rodada 8: downlink (comandos do dashboard) não chegava ao ESP32
+
+- Com uplink e gauge funcionando, os switches "Modo Automático" e "LED
+  Manual" no dashboard não tinham nenhum efeito no LED simulado, e nenhuma
+  mensagem aparecia no monitor serial ao clicar neles.
+- **Diagnóstico com MQTTX:** conectado em `ny3.blynk.cloud:1883` com
+  `user=device` / `password=<token>`, inscrito em `downlink/ds/#`, o clique
+  no switch "Modo Automático" no dashboard chegou como:
+  `Topic: downlink/ds/Modo Automatico` (nome do datastream, com espaço),
+  e **não** `downlink/ds/V1` (o Pin).
+- **Causa:** ao contrário do uplink (que aceita `ds/V0` pelo Pin), o
+  downlink usa o **nome do datastream** cadastrado no Blynk Console, não o
+  identificador do Pin. A resposta da IA do Blynk sobre isso estava errada;
+  o teste empírico com MQTTX foi decisivo.
+
+**Correção no `main.py`:** assinar e comparar pelos nomes exatos dos
+datastreams (`Modo Automatico`, `Limiar`, `LED Manual`) em vez de
+`V1`/`V2`/`V3`.
+
+**Validação final (log real):**
+
+```
+Luminosidade: 75.0% | Auto: True | Limiar: 30% | LED: 0
+Mensagem recebida em downlink/ds/Modo Automatico -> 0
+Luminosidade: 75.0% | Auto: False | Limiar: 30% | LED: 0
+Mensagem recebida em downlink/ds/LED Manual -> 1
+Luminosidade: 75.0% | Auto: False | Limiar: 30% | LED: 1
+Mensagem recebida em downlink/ds/LED Manual -> 0
+Luminosidade: 75.0% | Auto: False | Limiar: 30% | LED: 0
+```
+
+Modo automático desligado, controle manual do LED ligando e desligando —
+tudo respondendo em tempo real via MQTT.
+
 ## Configuração final validada
 
 - `MQTT_BROKER = "ny3.blynk.cloud"` (broker regional direto, evita o
   redirecionamento)
 - Autenticação: `user="device"`, `password=<BLYNK_AUTH_TOKEN>`
-- Tópicos: `ds/V0`...`ds/V4` (publicação) e `downlink/ds/V1`..`downlink/ds/V3`
-  (assinatura) — sempre com o Pin exatamente como aparece no Blynk Console
+- Uplink (device → cloud): `ds/V0`, `ds/V4` (usa o Pin)
+- Downlink (cloud → device): `downlink/ds/Modo Automatico`,
+  `downlink/ds/Limiar`, `downlink/ds/LED Manual` (usa o **nome** do
+  datastream, não o Pin — assimetria confirmada via MQTTX)
 - `INVERT_LDR = True`
 
 **Referências:** Blynk MQTT: Authentication · Blynk MQTT: Topic Structure ·

@@ -96,11 +96,11 @@ def mqtt_callback(topic, msg):
     valor = msg.decode()
     print("Mensagem recebida em", topic, "->", valor)
 
-    if topic == "downlink/ds/V1":
+    if topic == "downlink/ds/Modo Automatico":
         auto_mode = valor == "1"
-    elif topic == "downlink/ds/V2":
+    elif topic == "downlink/ds/Limiar":
         threshold = float(valor)
-    elif topic == "downlink/ds/V3":
+    elif topic == "downlink/ds/LED Manual":
         manual_led_state = int(valor)
 
     aplicar_estado_led()
@@ -117,9 +117,9 @@ def conectar_mqtt():
     )
     client.set_callback(mqtt_callback)
     client.connect()
-    client.subscribe(b"downlink/ds/V1")
-    client.subscribe(b"downlink/ds/V2")
-    client.subscribe(b"downlink/ds/V3")
+    client.subscribe(b"downlink/ds/Modo Automatico")
+    client.subscribe(b"downlink/ds/Limiar")
+    client.subscribe(b"downlink/ds/LED Manual")
     print("Conectado ao broker MQTT do Blynk!")
     return client
 

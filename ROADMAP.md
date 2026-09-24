@@ -38,10 +38,13 @@ MQTT + Blynk), da entrega da Atividade Somativa 2 em diante.
 - [x] Dashboard Blynk validado ao vivo: gauge de luminosidade atualizando
   em tempo real com a simulação do Wokwi
 
+- [x] Downlink (comandos do dashboard) corrigido e validado: o tópico usa o
+  **nome do datastream** (`downlink/ds/Modo Automatico`, `.../Limiar`,
+  `.../LED Manual`), não o Pin — diagnosticado com MQTTX. Modo
+  automático/manual e controle do LED testados via dashboard com sucesso.
+
 ## Em andamento
 
-- [ ] Testar os comandos do dashboard (V1/V2/V3) controlando o LED de volta
-  no Wokwi
 - [ ] Gravar vídeo demonstrativo (até 4 min)
 - [ ] Capturas de tela da simulação e do dashboard
 - [ ] Montar o `.zip` de entrega e enviar no AVA (prazo estendido: 23/09)
