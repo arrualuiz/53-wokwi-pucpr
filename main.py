@@ -30,9 +30,6 @@ WIFI_PASSWORD = ""
 BLYNK_AUTH_TOKEN = "SEU_TOKEN_DO_DEVICE_AQUI"   # gerado ao criar o device no Blynk.Cloud (NAO COMITAR o token real)
 MQTT_BROKER = "ny3.blynk.cloud"   # broker regional da conta (visto em "Regiao: NY3" no Blynk Console)
 MQTT_PORT = 1883
-# ID unico por execucao: evita colisao com sessoes antigas presas no broker
-# apos reinicios da simulacao (causava desconexoes intermitentes -1).
-MQTT_CLIENT_ID = "esp32-iluminacao-" + str(time.ticks_ms())
 
 LDR_PIN = 34     # entrada analogica (ADC) ligada ao divisor de tensao com o LDR
 LED_PIN = 2      # saida digital ligada ao LED (lampada simulada)
@@ -109,8 +106,12 @@ def mqtt_callback(topic, msg):
 
 
 def conectar_mqtt():
+    # ID novo a cada tentativa: evita colidir com a sessao anterior, que
+    # pode ainda estar "presa" no broker se a conexao caiu sem um
+    # disconnect() limpo (causava desconexoes -1 em loop).
+    client_id = "esp32-iluminacao-" + str(time.ticks_ms())
     client = MQTTClient(
-        MQTT_CLIENT_ID,
+        client_id,
         MQTT_BROKER,
         MQTT_PORT,
         user="device",
@@ -152,6 +153,10 @@ def main():
             time.sleep(0.1)
         except OSError as e:
             print("Erro de conexao, reconectando...", e)
+            try:
+                client.disconnect()
+            except OSError:
+                pass
             time.sleep(2)
             client = conectar_mqtt()
 
