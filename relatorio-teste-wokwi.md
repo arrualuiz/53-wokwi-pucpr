@@ -28,11 +28,10 @@ Luminosidade: 0.8% | Auto: True | Limiar: 30% | LED: 1
 Luminosidade: 75.0% | Auto: True | Limiar: 30% | LED: 0
 ```
 
-**O que ainda não foi verificado:** o dashboard do Blynk (gauge V0, switches
-V1 e V3, slider V2) não estava visível durante o teste. Os tópicos MQTT do
-Blynk usam o nome do datastream (`ds/<nome>`, `downlink/ds/<nome>`), então os
-datastreams no Blynk Console precisam se chamar exatamente V0, V1, V2, V3 e
-V4. Se tiverem outros nomes, é preciso ajustar os tópicos no `main.py`.
+**Atualização (ver Rodadas 9-11 abaixo):** os tópicos MQTT do Blynk usam o
+**nome do datastream** (`ds/<nome>`, `downlink/ds/<nome>`) tanto para
+uplink quanto para downlink — não o Pin (V0, V1...). A versão final e
+validada do `main.py` já usa os nomes corretos.
 
 ## Histórico
 
@@ -194,15 +193,71 @@ Luminosidade: 75.0% | Auto: False | Limiar: 30% | LED: 0
 Modo automático desligado, controle manual do LED ligando e desligando —
 tudo respondendo em tempo real via MQTT.
 
+### Rodada 9: uplink também usava Pin em vez de nome (955+ erros)
+
+- Mesmo com o downlink corrigido, a página **real** do device
+  (Dispositivos → ESP32 Wokwi) mostrava o gauge sempre em 0, enquanto a
+  página de preview do template (Zona do desenvolvedor → Painel de
+  Controle) mostrava números que pareciam reais (12%, 62%, 84%, 95%...).
+- **Descoberta:** essa página de preview do template gera valores
+  **aleatórios a cada carregamento** (dado de demonstração, não ligado a
+  nenhum device real) — o aviso "Esta é a aparência da página do
+  dispositivo para dispositivos reais" e os campos genéricos ("Nome Do
+  Dispositivo", "Proprietário do dispositivo") confirmam isso.
+- Em **Zona do desenvolvedor → Erros**, o device tinha centenas de
+  ocorrências de `Fluxo de dados com pino ds/V0 não encontrado` e
+  `ds/V4 não encontrado`.
+- **Causa:** o uplink (`client.publish`) também precisa do **nome do
+  datastream**, não do Pin — a mesma regra do downlink, mas que não
+  havíamos aplicado na publicação.
+
+**Correção no `main.py`:**
+```python
+client.publish(b"ds/Luminosidade", str(nivel).encode())
+client.publish(b"ds/Estado LED", str(estado_led).encode())
+```
+(antes era `ds/V0` e `ds/V4`)
+
+### Rodada 10: desconexões intermitentes por sessão duplicada
+
+- Após a correção acima, a conexão MQTT caía a cada 1-5 ciclos com
+  `Erro de conexao, reconectando... -1`, de forma irregular.
+- **Causa provável:** o `MQTT_CLIENT_ID` era uma string fixa
+  (`"esp32-iluminacao"`), então reinícios sucessivos da simulação (feitos
+  ao longo da depuração) deixavam sessões antigas "penduradas" no broker,
+  colidindo com a conexão nova (mesmo padrão do conflito de sessão visto
+  antes com o MQTTX usando o mesmo token).
+
+**Correção:** gerar um Client ID único a cada execução:
+```python
+MQTT_CLIENT_ID = "esp32-iluminacao-" + str(time.ticks_ms())
+```
+
+### Rodada 11: validação final real ✅
+
+- Com uplink usando o nome do datastream e Client ID único, a página
+  **Dispositivos → ESP32 Wokwi** (a página real do device, não o preview
+  do template) passou a mostrar o gauge de Luminosidade em **75%**,
+  batendo exatamente com o monitor serial do Wokwi.
+- Sistema validado de ponta a ponta, com a página correta identificada
+  para gravação do vídeo: **Dispositivos → ESP32 Wokwi**, aba "Em tempo
+  real" (nunca o Painel de Controle do template, que mostra dados falsos).
+
 ## Configuração final validada
 
 - `MQTT_BROKER = "ny3.blynk.cloud"` (broker regional direto, evita o
   redirecionamento)
 - Autenticação: `user="device"`, `password=<BLYNK_AUTH_TOKEN>`
-- Uplink (device → cloud): `ds/V0`, `ds/V4` (usa o Pin)
+- `MQTT_CLIENT_ID` único por execução (`"esp32-iluminacao-" + time.ticks_ms()`)
+- Uplink (device → cloud): `ds/Luminosidade`, `ds/Estado LED` (usa o
+  **nome** do datastream)
 - Downlink (cloud → device): `downlink/ds/Modo Automatico`,
   `downlink/ds/Limiar`, `downlink/ds/LED Manual` (usa o **nome** do
-  datastream, não o Pin — assimetria confirmada via MQTTX)
+  datastream)
+- Ou seja: **tanto uplink quanto downlink usam o nome do datastream, não
+  o Pin** — a suposição inicial (usar o Pin, ex. `V0`) estava errada nos
+  dois sentidos, mas só ficou evidente depois de checar a página real do
+  device e a aba de Erros do Blynk Console.
 - `INVERT_LDR = True`
 
 **Referências:** Blynk MQTT: Authentication · Blynk MQTT: Topic Structure ·
