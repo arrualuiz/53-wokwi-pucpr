@@ -45,8 +45,11 @@ MQTT + Blynk), da entrega da Atividade Somativa 2 em diante.
 - [x] Uplink também corrigido para usar o nome do datastream
   (`ds/Luminosidade`, `ds/Estado LED`, não `ds/V0`/`ds/V4`) — descoberto
   via aba "Erros" do Blynk Console (955+ erros de "pino não encontrado")
-- [x] Client ID único por execução (`time.ticks_ms()`), eliminando
-  desconexões intermitentes por sessão duplicada no broker
+- [x] Client ID único por **tentativa de conexão** (não só por execução),
+  com `disconnect()` antes de reconectar — eliminou de vez as
+  desconexões intermitentes. Conexão MQTT agora estável, todos os
+  controles do dashboard (Modo Automático, Limiar, LED Manual)
+  testados em sequência sem falhas.
 - [x] Confirmado que a página real do device (Dispositivos → ESP32 Wokwi)
   mostra o valor real (75%), batendo com o monitor serial — a página de
   preview do template mostra dados aleatórios/fake e não deve ser usada

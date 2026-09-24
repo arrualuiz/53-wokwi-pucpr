@@ -221,34 +221,74 @@ client.publish(b"ds/Estado LED", str(estado_led).encode())
 ### Rodada 10: desconexões intermitentes por sessão duplicada
 
 - Após a correção acima, a conexão MQTT caía a cada 1-5 ciclos com
-  `Erro de conexao, reconectando... -1`, de forma irregular.
-- **Causa provável:** o `MQTT_CLIENT_ID` era uma string fixa
-  (`"esp32-iluminacao"`), então reinícios sucessivos da simulação (feitos
-  ao longo da depuração) deixavam sessões antigas "penduradas" no broker,
-  colidindo com a conexão nova (mesmo padrão do conflito de sessão visto
-  antes com o MQTTX usando o mesmo token).
+  `Erro de conexao, reconectando... -1`, de forma irregular — inclusive
+  logo após "Conectado ao broker MQTT do Blynk!", antes de qualquer
+  publicação.
+- **Causa 1:** o `MQTT_CLIENT_ID` era uma string fixa
+  (`"esp32-iluminacao"`), gerada uma única vez no início do script.
+- **Tentativa incompleta:** gerar o ID uma vez com `time.ticks_ms()` no
+  topo do arquivo não resolveu, porque toda vez que a conexão caía e
+  reconectava **dentro da mesma execução**, reusava o mesmo ID gerado no
+  início — colidindo de novo com a sessão anterior (que nunca foi
+  fechada com um `disconnect()` limpo, só abandonada).
+- **Causa raiz completa:** o Client ID precisa ser único a **cada
+  tentativa de conexão**, não só a cada execução do script.
 
-**Correção:** gerar um Client ID único a cada execução:
+**Correção final no `main.py`:**
 ```python
-MQTT_CLIENT_ID = "esp32-iluminacao-" + str(time.ticks_ms())
+def conectar_mqtt():
+    client_id = "esp32-iluminacao-" + str(time.ticks_ms())  # dentro da funcao
+    client = MQTTClient(client_id, MQTT_BROKER, MQTT_PORT, ...)
+    ...
+
+# no loop principal, no except:
+except OSError as e:
+    print("Erro de conexao, reconectando...", e)
+    try:
+        client.disconnect()  # fecha a conexao antiga antes de reconectar
+    except OSError:
+        pass
+    time.sleep(2)
+    client = conectar_mqtt()
 ```
 
 ### Rodada 11: validação final real ✅
 
-- Com uplink usando o nome do datastream e Client ID único, a página
-  **Dispositivos → ESP32 Wokwi** (a página real do device, não o preview
-  do template) passou a mostrar o gauge de Luminosidade em **75%**,
-  batendo exatamente com o monitor serial do Wokwi.
+- Com uplink usando o nome do datastream, downlink correto e Client ID
+  único por tentativa, a conexão ficou **estável, sem quedas**, e todos
+  os controles do dashboard responderam corretamente em sequência:
+
+```
+Mensagem recebida em downlink/ds/Modo Automatico -> 1
+Luminosidade: 75.0% | Auto: True | Limiar: 0.0% | LED: 0
+Mensagem recebida em downlink/ds/Modo Automatico -> 0
+...
+Mensagem recebida em downlink/ds/LED Manual -> 1
+Luminosidade: 75.0% | Auto: False | Limiar: 0.0% | LED: 1
+Mensagem recebida em downlink/ds/LED Manual -> 0
+...
+Mensagem recebida em downlink/ds/Limiar -> 100
+Luminosidade: 75.0% | Auto: False | Limiar: 100.0% | LED: 0
+Mensagem recebida em downlink/ds/Limiar -> 0
+...
+```
+
+- A página **Dispositivos → ESP32 Wokwi** (a página real do device) mostrou
+  o gauge de Luminosidade em **75%**, batendo exatamente com o monitor
+  serial do Wokwi.
 - Sistema validado de ponta a ponta, com a página correta identificada
   para gravação do vídeo: **Dispositivos → ESP32 Wokwi**, aba "Em tempo
-  real" (nunca o Painel de Controle do template, que mostra dados falsos).
+  real" (nunca o Painel de Controle do template, que mostra dados falsos
+  de demonstração).
 
 ## Configuração final validada
 
 - `MQTT_BROKER = "ny3.blynk.cloud"` (broker regional direto, evita o
   redirecionamento)
 - Autenticação: `user="device"`, `password=<BLYNK_AUTH_TOKEN>`
-- `MQTT_CLIENT_ID` único por execução (`"esp32-iluminacao-" + time.ticks_ms()`)
+- `MQTT_CLIENT_ID` único por **tentativa de conexão** (gerado dentro de
+  `conectar_mqtt()`, incluindo em reconexões), com `disconnect()` best-effort
+  antes de cada reconexão
 - Uplink (device → cloud): `ds/Luminosidade`, `ds/Estado LED` (usa o
   **nome** do datastream)
 - Downlink (cloud → device): `downlink/ds/Modo Automatico`,
